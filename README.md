@@ -5,8 +5,7 @@
 ### Start server
 
 ```bash
-nohup python -u serve_fasttext.py --model /path/to/wiki.en.bin 
-                                  --port 8980
+nohup python -u serve_fasttext.py --model /path/to/wiki.en.bin --port 8980 &
 ```
 
 ### Query word vectors
