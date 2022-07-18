@@ -25,7 +25,7 @@ async def handle_fasttext(request):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', default=8980)
+    parser.add_argument('-p', '--port', default=8981)
     args = parser.parse_args()
 
     url = 'https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz'
