@@ -44,3 +44,21 @@ requests.post(url, json=[{'sentence': 'I love you'}, {'sentence': 'asdf'}]).json
 #  'words': ['I', 'love', 'you']},
 # {'verbs': [], 'words': ['asdf']}]
 ```
+
+Run [dependency parser](https://demo.allennlp.org/dependency-parsing):
+
+```bash
+nohup python -u serve_parser.py --port 8982 &
+```
+
+Get SRL predictions:
+
+```bash
+import requests
+url = 'http://127.0.0.1:8982/parse'
+requests.post(url, json=[{'sentence': 'I love you'}, {'sentence': 'asdf'}]).json()
+# [{'words': ['I', 'love', 'you'],
+#  'pos': ['PRON', 'VERB', 'PRON'],
+#  'predicted_dependencies': ['nsubj', 'root', 'dep'],
+#  ...
+```
