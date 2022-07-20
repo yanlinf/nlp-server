@@ -9,7 +9,7 @@ routes = web.RouteTableDef()
 
 
 @routes.post('/srl')
-async def handle_fasttext(request):
+async def handle_srl(request):
     model = request.app['model']
     params = await request.json()
     try:

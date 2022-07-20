@@ -9,7 +9,7 @@ routes = web.RouteTableDef()
 
 
 @routes.post('/parse')
-async def handle_fasttext(request):
+async def handle_parse(request):
     model = request.app['model']
     params = await request.json()
     try:
