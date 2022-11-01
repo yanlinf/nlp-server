@@ -1,7 +1,5 @@
 import argparse
 from aiohttp import web
-import sys
-sys.path.append('cogcomp_srl')
 from cogcomp_srl.verb_sense_srl import SenseSRLPredictor
 
 routes = web.RouteTableDef()

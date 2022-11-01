@@ -1,9 +1,6 @@
 import argparse
 from aiohttp import web
 from typing import List
-import sys
-
-sys.path.append('cogcomp_srl')
 from cogcomp_srl.id_nominal import NominalIdPredictor
 from cogcomp_srl.nominal_sense_srl import NomSenseSRLPredictor
 
