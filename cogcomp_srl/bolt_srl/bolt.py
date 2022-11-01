@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 TypedSpan = Tuple[int, Tuple[int, int]]  # pylint: disable=invalid-name
 TypedStringSpan = Tuple[str, Tuple[int, int]]  # pylint: disable=invalid-name
 
+
 class BoltSentence:
     """
     A class representing the annotations available for a single CONLL formatted sentence.
@@ -39,6 +40,7 @@ class BoltSentence:
         A dictionary keyed by the verb in the sentence for the given
         Propbank frame labels, in a BIO format.
     """
+
     def __init__(self,
                  document_id: str,
                  sentence_id: int,
@@ -48,7 +50,6 @@ class BoltSentence:
                  predicate_lemmas: List[Optional[str]],
                  predicate_framenet_ids: List[Optional[str]],
                  srl_frames: List[Tuple[str, List[str]]]) -> None:
-
         self.document_id = document_id
         self.sentence_id = sentence_id
         self.words = words
@@ -98,6 +99,7 @@ class Bolt:
         mentioned in Column 7. If there are no predicates tagged in a sentence this is a
         single column with all rows marked with an ``*``.
     """
+
     def dataset_iterator(self, file_path: str) -> Iterator[BoltSentence]:
         """
         An iterator over the entire dataset, yielding all sentences processed.
@@ -247,13 +249,13 @@ class Bolt:
         else:
             parse_tree = None
         return BoltSentence(document_id,
-                                 sentence_id,
-                                 sentence,
-                                 pos_tags,
-                                 parse_tree,
-                                 predicate_lemmas,
-                                 predicate_framenet_ids,
-                                 srl_frames)
+                            sentence_id,
+                            sentence,
+                            pos_tags,
+                            parse_tree,
+                            predicate_lemmas,
+                            predicate_framenet_ids,
+                            srl_frames)
 
     @staticmethod
     def _process_span_annotations_for_word(annotations: List[str],

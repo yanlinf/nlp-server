@@ -13,6 +13,7 @@ from allennlp.data.tokenizers import Token
 
 logger = logging.getLogger(__name__)
 
+
 def separate_hyphens(og_sentence: List[str]):
     new_sentence = []
     new_indices = []
@@ -21,23 +22,24 @@ def separate_hyphens(og_sentence: List[str]):
         broken_h_indices = []
         h_idx = word.find('-')
         bslash_idx = word.find('/')
-        h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+        h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
         prev_h_bs_idx = -1
         while h_bs_idx > 0:
-            subsection = word[prev_h_bs_idx+1:h_bs_idx+1]
+            subsection = word[prev_h_bs_idx + 1:h_bs_idx + 1]
             broken_h_indices.append(i)
             new_sentence.append(subsection)
             prev_h_bs_idx = h_bs_idx
-            h_idx = word.find('-', h_bs_idx+1)
-            bslash_idx = word.find('/', h_bs_idx+1)
-            h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+            h_idx = word.find('-', h_bs_idx + 1)
+            bslash_idx = word.find('/', h_bs_idx + 1)
+            h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
             i += 1
-        subsection = word[prev_h_bs_idx+1:]
+        subsection = word[prev_h_bs_idx + 1:]
         new_sentence.append(subsection)
         broken_h_indices.append(i)
         i += 1
         new_indices.append(broken_h_indices)
     return new_sentence, new_indices
+
 
 def _convert_nom_indices_to_wordpiece_indices(nom_indices: List[int], end_offsets: List[int]):
     """
@@ -56,14 +58,15 @@ def _convert_nom_indices_to_wordpiece_indices(nom_indices: List[int], end_offset
     """
     j = 0
     new_nom_indices = []
-    for i, offset in enumerate(end_offsets): # For each word's offset (includes separated hyphenation)
-        indicator = nom_indices[i] # 1 if word at i is part of nominal predicate, 0 if not.
-        while j < offset: # Append indicator over lenth of wordpieces for word.
-            new_nom_indices.append(indicator) 
+    for i, offset in enumerate(end_offsets):  # For each word's offset (includes separated hyphenation)
+        indicator = nom_indices[i]  # 1 if word at i is part of nominal predicate, 0 if not.
+        while j < offset:  # Append indicator over lenth of wordpieces for word.
+            new_nom_indices.append(indicator)
             j += 1
 
     # Add 0 incidators for cls and sep tokens.
     return [0] + new_nom_indices + [0]
+
 
 @DatasetReader.register("nombank-id")
 class NombankReader(DatasetReader):
@@ -99,10 +102,10 @@ class NombankReader(DatasetReader):
     def __init__(
             self,
             token_indexers: Dict[str, TokenIndexer] = None,
-            lazy:bool = False,
+            lazy: bool = False,
             bert_model_name: str = None,
-            #**kwargs,
-        ) -> None:
+            # **kwargs,
+    ) -> None:
         super().__init__(lazy)
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         if bert_model_name is not None:
@@ -114,7 +117,7 @@ class NombankReader(DatasetReader):
 
     def _wordpiece_tokenize_input(
             self, tokens: List[str]
-        ) -> Tuple[List[str], List[int], List[int]]:
+    ) -> Tuple[List[str], List[int], List[int]]:
         """
         Converts a list of tokens to wordpiece tokens and offsets, as well as
         adding BERT CLS and SEP tokens to the beginning and end of the sentence.
@@ -140,7 +143,7 @@ class NombankReader(DatasetReader):
             if self.lowercase_input:
                 token = token.lower()
             word_pieces = self.bert_tokenizer.wordpiece_tokenizer.tokenize(token)
-            start_offsets.append(cumulative+1) # +1 because we add the starting "[CLS]" token
+            start_offsets.append(cumulative + 1)  # +1 because we add the starting "[CLS]" token
             cumulative += len(word_pieces)
             end_offsets.append(cumulative)
             word_piece_tokens.extend(word_pieces)
@@ -165,10 +168,10 @@ class NombankReader(DatasetReader):
                         print('Faulty data point. Trying to access hyphenation that does not exist.')
                         continue
                     new_pred_loc = [new_pred_loc[pred_loc[1]]]
-                
+
                 preds_indicator[new_pred_loc[0]] = 1
                 # If predicate is entire hyphenation, this line covers it.
-            #print('NEW INSTANCE: TOKENS: ', new_tokens, '; preds_indicator: ', preds_indicator)
+            # print('NEW INSTANCE: TOKENS: ', new_tokens, '; preds_indicator: ', preds_indicator)
             yield self.text_to_instance(og_tokens, new_tokens, preds_indicator)
 
     def read_nombank_data(self, filename):
@@ -202,12 +205,12 @@ class NombankReader(DatasetReader):
             fileid = str_list[0]
             sentnum = str_list[1]
             # Get index of predicate. Predicate is always first argument.
-            predicate_loc = str_list[separator_index+2][:str_list[separator_index+2].find(':')]
+            predicate_loc = str_list[separator_index + 2][:str_list[separator_index + 2].find(':')]
             sub_idx = predicate_loc.find('_')
             if sub_idx < 0:
                 og_nom_loc = [int(predicate_loc)]
             else:
-                og_nom_loc = [int(predicate_loc[:sub_idx]), int(predicate_loc[sub_idx+1:])]
+                og_nom_loc = [int(predicate_loc[:sub_idx]), int(predicate_loc[sub_idx + 1:])]
             if fileid == last_file:
                 if sentnum == last_sentnum:
                     sentence_predicates.append(og_nom_loc)
@@ -230,10 +233,10 @@ class NombankReader(DatasetReader):
             data.append((last_sentence, sentence_predicates, new_indices, new_sentence))
         fin.close()
         return data
-    
+
     def text_to_instance(
-            self, og_tokens: List[Token], new_tokens: List[Token], pred_label: List[int]=None
-        ) -> Instance:
+            self, og_tokens: List[Token], new_tokens: List[Token], pred_label: List[int] = None
+    ) -> Instance:
         """
         We take original sentence, `pre-tokenized` input as tokens here, as well as the
         tokens corresponding to once tokenized and de-hyphenated. The predicate label is 
@@ -244,7 +247,7 @@ class NombankReader(DatasetReader):
         fields: Dict[str, Field] = {}
         if self.bert_tokenizer is not None:
             wordpieces, end_offsets, start_offsets = self._wordpiece_tokenize_input(
-                    [t.text for t in new_tokens]
+                [t.text for t in new_tokens]
             )
             # end_offsets and start_offsets are computed to correspond to sentence with separated hyphens.
             text_field = TextField(
@@ -252,7 +255,7 @@ class NombankReader(DatasetReader):
                 token_indexers=self._token_indexers,
             )
             metadata_dict["offsets"] = start_offsets
-        else: # Without a bert tokenizer, just give it new tokens and corresponding info.
+        else:  # Without a bert tokenizer, just give it new tokens and corresponding info.
             text_field = TextField(new_tokens, token_indexers=self._token_indexers)
 
         fields["tokens"] = text_field
@@ -266,5 +269,3 @@ class NombankReader(DatasetReader):
 
         fields["metadata"] = MetadataField(metadata_dict)
         return Instance(fields)
-
-

@@ -9,13 +9,15 @@ from pytorch_pretrained_bert.modeling import BertModel
 from allennlp.data import Vocabulary
 from allennlp.models.model import Model
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
-from allennlp.nn.util import get_text_field_mask, sequence_cross_entropy_with_logits, get_lengths_from_binary_sequence_mask, viterbi_decode
+from allennlp.nn.util import get_text_field_mask, sequence_cross_entropy_with_logits, \
+    get_lengths_from_binary_sequence_mask, viterbi_decode
 from allennlp.training.metrics.srl_eval_scorer import DEFAULT_SRL_EVAL_PATH, SrlEvalScorer
 from allennlp.models.srl_util import convert_bio_tags_to_conll_format
 from allennlp.training.metrics import CategoricalAccuracy
 
+
 @Model.register("nombank-sense-srl-bert")
-class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registrable
+class NomSenseSRLBert(Model):  # Model inherits from torch.nn.Module and Registrable
     """
     # Parameters
     
@@ -36,6 +38,7 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
         which is located at allennlp-models/allennlp_models/syntax/srl/srl-eval.pl. If `None`, srl-eval.pl is not used. 
 
     """
+
     def __init__(
             self,
             vocab: Vocabulary,
@@ -46,24 +49,24 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
             label_smoothing: float = None,
             ignore_span_metric: bool = False,
             srl_eval_path: str = DEFAULT_SRL_EVAL_PATH,
-            ) -> None:
+    ) -> None:
         super(NomSenseSRLBert, self).__init__(vocab, regularizer)
-        
+
         if isinstance(bert_model, str):
             self.bert_model = BertModel.from_pretrained(bert_model)
         else:
             self.bert_model = bert_model
 
-        self.num_classes = self.vocab.get_vocab_size("labels") 
+        self.num_classes = self.vocab.get_vocab_size("labels")
         self.sense_classes = self.vocab.get_vocab_size("sense_labels")
 
         if srl_eval_path is not None:
             # For span based evaluation, do not consider labels for predicate.
             # But in Nombank pre-processing, we did not label predicate in tags.
-           self.span_metric = SrlEvalScorer(srl_eval_path, ignore_classes=[]) 
+            self.span_metric = SrlEvalScorer(srl_eval_path, ignore_classes=[])
         else:
             self.span_metric = None
-        
+
         self.tag_projection_layer = Linear(self.bert_model.config.hidden_size, self.num_classes)
         self.sense_projection_layer = Linear(self.bert_model.config.hidden_size, self.sense_classes)
         self.embedding_dropout = Dropout(p=embedding_dropout)
@@ -120,22 +123,23 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
         """
         mask = get_text_field_mask(tokens)
         bert_embeddings, _ = self.bert_model(
-                input_ids=tokens["tokens"], #util.get_token_ids_from_text_field_tensors(tokens),
-                token_type_ids=nom_indicator,
-                attention_mask=mask,
-                output_all_encoded_layers=False
-                )
+            input_ids=tokens["tokens"],  # util.get_token_ids_from_text_field_tensors(tokens),
+            token_type_ids=nom_indicator,
+            attention_mask=mask,
+            output_all_encoded_layers=False
+        )
         embedded_text_input = self.embedding_dropout(bert_embeddings)
         batch_size, sequence_length, _ = embedded_text_input.size()
         tag_logits = self.tag_projection_layer(embedded_text_input)
 
         reshaped_tag_log_probs = tag_logits.view(-1, self.num_classes)
         tag_class_probabilities = F.softmax(reshaped_tag_log_probs, dim=-1).view(
-                [batch_size, sequence_length, self.num_classes]
+            [batch_size, sequence_length, self.num_classes]
         )
 
-        words, nominals, offsets, nom_indices = zip(*[(x["words"], x["nominal"], x["offsets"], x["nom_index"]) for x in metadata])
-        
+        words, nominals, offsets, nom_indices = zip(
+            *[(x["words"], x["nominal"], x["offsets"], x["nom_index"]) for x in metadata])
+
         sense_logits = self.sense_projection_layer(embedded_text_input)
         sense_logits_list = []
         for i, idx in enumerate(nom_indices):
@@ -143,7 +147,9 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
         sense_logits = torch.stack(sense_logits_list)
         sense_class_probabilities = F.softmax(sense_logits, dim=-1).view([batch_size, self.sense_classes])
 
-        output_dict = {"tag_logits": tag_logits, "sense_logits": sense_logits, "tag_class_probabilities": tag_class_probabilities, "sense_class_probabilities": sense_class_probabilities}
+        output_dict = {"tag_logits": tag_logits, "sense_logits": sense_logits,
+                       "tag_class_probabilities": tag_class_probabilities,
+                       "sense_class_probabilities": sense_class_probabilities}
         # Retain the mask in the output dictionary so we can remove padding
         # when we do viterbi inference in self.make_output_human_readable.
         output_dict["mask"] = mask
@@ -159,31 +165,31 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
                 self.sense_accuracy(sense_logits, sense)
                 sense_loss = self.sense_loss_fxn(sense_logits, sense.long().view(-1))
             tag_loss = sequence_cross_entropy_with_logits(
-                    tag_logits, tags, mask, label_smoothing=self._label_smoothing
-                    )
+                tag_logits, tags, mask, label_smoothing=self._label_smoothing
+            )
             if not self.ignore_span_metric and self.span_metric is not None and not self.training:
                 batch_nom_indices = [
-                        # Does not account for when nominal is entire hyphenated word. TODO
-                        example_metadata["nom_index"][0] for example_metadata in metadata
+                    # Does not account for when nominal is entire hyphenated word. TODO
+                    example_metadata["nom_index"][0] for example_metadata in metadata
                 ]
                 batch_sentences = [example_metadata["words"] for example_metadata in metadata]
                 # Get BIO tags from make_output_human_readable()
                 batch_bio_predicted_tags = self.decode(output_dict).pop("tags")
                 batch_conll_predicted_tags = [
-                        convert_bio_tags_to_conll_format(tags) for tags in batch_bio_predicted_tags
+                    convert_bio_tags_to_conll_format(tags) for tags in batch_bio_predicted_tags
                 ]
                 batch_bio_gold_tags = [
-                        example_metadata["gold_tags"] for example_metadata in metadata
+                    example_metadata["gold_tags"] for example_metadata in metadata
                 ]
                 batch_conll_gold_tags = [
-                        convert_bio_tags_to_conll_format(tags) for tags in batch_bio_gold_tags
+                    convert_bio_tags_to_conll_format(tags) for tags in batch_bio_gold_tags
                 ]
-               
+
                 self.span_metric(
-                        batch_nom_indices,
-                        batch_sentences,
-                        batch_conll_predicted_tags,
-                        batch_conll_gold_tags,
+                    batch_nom_indices,
+                    batch_sentences,
+                    batch_conll_predicted_tags,
+                    batch_conll_gold_tags,
                 )
             output_dict["loss"] = sense_loss + tag_loss
         return output_dict
@@ -205,7 +211,7 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
 
         if tag_predictions.dim() == 3:
             tag_predictions_list = [
-                    tag_predictions[i].detach().cpu() for i in range(tag_predictions.size(0))
+                tag_predictions[i].detach().cpu() for i in range(tag_predictions.size(0))
             ]
         else:
             tag_predictions_list = [tag_predictions]
@@ -216,20 +222,20 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
 
         for predictions, length, offsets in zip(
                 tag_predictions_list, sequence_lengths, output_dict["wordpiece_offsets"]
-            ):
+        ):
             max_likelihood_sequence, _ = viterbi_decode(
-                    predictions[:length], transition_matrix, allowed_start_transitions=start_transitions
-                    ) # why predictions[:length]? how do we know the last part is what we remove?
+                predictions[:length], transition_matrix, allowed_start_transitions=start_transitions
+            )  # why predictions[:length]? how do we know the last part is what we remove?
             tags = [
-                    self.vocab.get_token_from_index(x, namespace="labels")
-                    for x in max_likelihood_sequence
-                    ]
+                self.vocab.get_token_from_index(x, namespace="labels")
+                for x in max_likelihood_sequence
+            ]
 
             wordpiece_tags.append(tags)
             word_tags.append([tags[i] for i in offsets])
         output_dict["wordpiece_tags"] = wordpiece_tags
         output_dict["tags"] = word_tags
-        
+
         sense_predictions = output_dict["sense_class_probabilities"]
         if sense_predictions.dim() == 2:
             sense_predictions_list = [sense_predictions[i] for i in range(sense_predictions.shape[0])]
@@ -251,7 +257,7 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
         else:
             metric_dict = self.span_metric.get_metric(reset=reset)
             sense_accuracy = self.sense_accuracy.get_metric(reset)
-            return_dict = {x:y for x, y in metric_dict.items() if "overall" in x}
+            return_dict = {x: y for x, y in metric_dict.items() if "overall" in x}
             return_dict["sense-accuracy"] = sense_accuracy
             return_dict["combined-score"] = return_dict["f1-measure-overall"] * sense_accuracy
             return return_dict
@@ -286,7 +292,7 @@ class NomSenseSRLBert(Model): # Model inherits from torch.nn.Module and Registra
                 start_transitions[i] = float("-inf")
             for j, label in all_labels.items():
                 # I-XXX labels can only be preceded by themselves or their corresp B-XXX tag.
-                if i != j and label[0] == "I" and not previous_label=="B"+label[1:]: 
+                if i != j and label[0] == "I" and not previous_label == "B" + label[1:]:
                     transition_matrix[i, j] = float("-inf")
         return transition_matrix, start_transitions
 

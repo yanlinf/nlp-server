@@ -15,6 +15,7 @@ from allennlp.nn.util import get_lengths_from_binary_sequence_mask, viterbi_deco
 from allennlp.training.metrics.srl_eval_scorer import SrlEvalScorer, DEFAULT_SRL_EVAL_PATH
 from allennlp.training.metrics import CategoricalAccuracy
 
+
 @Model.register("bolt-srl-model")
 class BoltSRLModel(Model):
     """
@@ -37,6 +38,7 @@ class BoltSRLModel(Model):
         The path to the srl-eval.pl script. By default, will use the srl-eval.pl included with allennlp,
         which is located at allennlp/tools/srl-eval.pl . If ``None``, srl-eval.pl is not used.
     """
+
     def __init__(self,
                  vocab: Vocabulary,
                  bert_model: Union[str, BertModel],
@@ -54,7 +56,7 @@ class BoltSRLModel(Model):
             self.bert_model = bert_model
 
         self.num_classes = self.vocab.get_vocab_size("labels")
-        
+
         if srl_eval_path is not None:
             # For the span based evaluation, we don't want to consider labels
             # for verb, because the verb index is provided to the model.
@@ -67,7 +69,7 @@ class BoltSRLModel(Model):
         self.ignore_span_metric = ignore_span_metric
         initializer(self)
 
-    def forward(self, # type: ignore
+    def forward(self,  # type: ignore
                 tokens: Dict[str, torch.Tensor],
                 verb_indicator: torch.Tensor,
                 metadata: List[Any],
@@ -113,9 +115,9 @@ class BoltSRLModel(Model):
         tag_logits = self.tag_projection_layer(embedded_text_input)
         reshaped_log_probs = tag_logits.view(-1, self.num_classes)
         tags_class_probabilities = F.softmax(reshaped_log_probs, dim=-1).view([batch_size,
-                                                                          sequence_length,
-                                                                          self.num_classes])
-        
+                                                                               sequence_length,
+                                                                               self.num_classes])
+
         verb_idx = torch.nonzero(verb_indicator)
         # torch.nonzero gives us all indices of nonzero elts, so just get the first one.
         output_dict = {"tag_logits": tag_logits, "tag_class_probabilities": tags_class_probabilities}
@@ -176,7 +178,7 @@ class BoltSRLModel(Model):
             tag_predictions_list = [tag_predictions[i].detach().cpu() for i in range(tag_predictions.size(0))]
         else:
             tag_predictions_list = [tag_predictions]
-        
+
         wordpiece_tags = []
         word_tags = []
         transition_matrix = self.get_viterbi_pairwise_potentials()
@@ -205,7 +207,7 @@ class BoltSRLModel(Model):
             metric_dict = self.span_metric.get_metric(reset=reset)
             return_dict = {x: y for x, y in metric_dict.items() if "overall" in x}
             return return_dict
-            
+
     def get_viterbi_pairwise_potentials(self):
         """
         Generate a matrix of pairwise transition potentials for the BIO labels.
@@ -230,7 +232,6 @@ class BoltSRLModel(Model):
                 if i != j and label[0] == 'I' and not previous_label == 'B' + label[1:]:
                     transition_matrix[i, j] = float("-inf")
         return transition_matrix
-
 
     def get_start_transitions(self):
         """

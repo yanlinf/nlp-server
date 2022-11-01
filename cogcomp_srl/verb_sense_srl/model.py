@@ -15,6 +15,7 @@ from allennlp.nn.util import get_lengths_from_binary_sequence_mask, viterbi_deco
 from allennlp.training.metrics.srl_eval_scorer import SrlEvalScorer, DEFAULT_SRL_EVAL_PATH
 from allennlp.training.metrics import CategoricalAccuracy
 
+
 @Model.register("sense-srl-model")
 class SenseSRLModel(Model):
     """
@@ -37,6 +38,7 @@ class SenseSRLModel(Model):
         The path to the srl-eval.pl script. By default, will use the srl-eval.pl included with allennlp,
         which is located at allennlp/tools/srl-eval.pl . If ``None``, srl-eval.pl is not used.
     """
+
     def __init__(self,
                  vocab: Vocabulary,
                  bert_model: Union[str, BertModel],
@@ -55,7 +57,7 @@ class SenseSRLModel(Model):
 
         self.num_classes = self.vocab.get_vocab_size("labels")
         self.sense_classes = self.vocab.get_vocab_size("sense_labels")
-        
+
         if srl_eval_path is not None:
             # For the span based evaluation, we don't want to consider labels
             # for verb, because the verb index is provided to the model.
@@ -71,7 +73,7 @@ class SenseSRLModel(Model):
         self.ignore_span_metric = ignore_span_metric
         initializer(self)
 
-    def forward(self, # type: ignore
+    def forward(self,  # type: ignore
                 tokens: Dict[str, torch.Tensor],
                 verb_indicator: torch.Tensor,
                 metadata: List[Any],
@@ -128,9 +130,9 @@ class SenseSRLModel(Model):
         tag_logits = self.tag_projection_layer(embedded_text_input)
         reshaped_log_probs = tag_logits.view(-1, self.num_classes)
         tags_class_probabilities = F.softmax(reshaped_log_probs, dim=-1).view([batch_size,
-                                                                          sequence_length,
-                                                                          self.num_classes])
-        
+                                                                               sequence_length,
+                                                                               self.num_classes])
+
         sense_logits = self.sense_projection_layer(embedded_text_input)
         verb_idx = torch.nonzero(verb_indicator)
         sense_logits_list = []
@@ -143,7 +145,9 @@ class SenseSRLModel(Model):
             last_i = i
         sense_logits = torch.stack(sense_logits_list)
         sense_class_probabilities = F.softmax(sense_logits, dim=-1).view([batch_size, self.sense_classes])
-        output_dict = {"tag_logits": tag_logits, "sense_logits": sense_logits, "tag_class_probabilities": tags_class_probabilities, "sense_class_probabilities": sense_class_probabilities}
+        output_dict = {"tag_logits": tag_logits, "sense_logits": sense_logits,
+                       "tag_class_probabilities": tags_class_probabilities,
+                       "sense_class_probabilities": sense_class_probabilities}
         # We need to retain the mask in the output dictionary
         # so that we can crop the sequences to remove padding
         # when we do viterbi inference in self.decode.
@@ -159,9 +163,9 @@ class SenseSRLModel(Model):
                 self.sense_accuracy(sense_logits, sense)
                 sense_loss = self.sense_loss_fxn(sense_logits, sense.long().view(-1))
             tags_loss = sequence_cross_entropy_with_logits(tag_logits,
-                                                      tags,
-                                                      mask,
-                                                      label_smoothing=self._label_smoothing)
+                                                           tags,
+                                                           mask,
+                                                           label_smoothing=self._label_smoothing)
             if not self.ignore_span_metric and self.span_metric is not None and not self.training:
                 batch_verb_indices = [example_metadata["verb_index"] for example_metadata in metadata]
                 batch_sentences = [example_metadata["words"] for example_metadata in metadata]
@@ -206,7 +210,7 @@ class SenseSRLModel(Model):
             tag_predictions_list = [tag_predictions[i].detach().cpu() for i in range(tag_predictions.size(0))]
         else:
             tag_predictions_list = [tag_predictions]
-        
+
         wordpiece_tags = []
         word_tags = []
         transition_matrix = self.get_viterbi_pairwise_potentials()
@@ -229,7 +233,7 @@ class SenseSRLModel(Model):
             sense_predictions_list = [sense_predictions[i] for i in range(sense_predictions.shape[0])]
         else:
             sense_predictions_list = [sense_predictions]
-        
+
         sense_classes = []
         for sense_prediction in sense_predictions_list:
             label_idx = sense_prediction.argmax(dim=-1).item()
@@ -237,7 +241,7 @@ class SenseSRLModel(Model):
             sense_classes.append(label_str)
         # print('sense predictions: ', sense_classes)
         output_dict["sense"] = sense_classes
-        
+
         return output_dict
 
     def get_metrics(self, reset: bool = False):
@@ -248,14 +252,14 @@ class SenseSRLModel(Model):
 
         else:
             metric_dict = self.span_metric.get_metric(reset=reset)
-            sense_accuracy = self.sense_accuracy.get_metric(reset) 
+            sense_accuracy = self.sense_accuracy.get_metric(reset)
             # This can be a lot of metrics, as there are 3 per class.
             # we only really care about the overall metrics, so we filter for them here.
             return_dict = {x: y for x, y in metric_dict.items() if "overall" in x}
             return_dict["sense-accuracy"] = sense_accuracy
             return_dict["combined-score"] = return_dict["f1-measure-overall"] * sense_accuracy
             return return_dict
-            
+
     def get_viterbi_pairwise_potentials(self):
         """
         Generate a matrix of pairwise transition potentials for the BIO labels.
@@ -280,7 +284,6 @@ class SenseSRLModel(Model):
                 if i != j and label[0] == 'I' and not previous_label == 'B' + label[1:]:
                     transition_matrix[i, j] = float("-inf")
         return transition_matrix
-
 
     def get_start_transitions(self):
         """

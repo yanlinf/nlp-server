@@ -15,6 +15,7 @@ class BoltSRLPredictor(Predictor):
     """
     Predictor for the :class:`~allennlp.models.bidaf.SemanticRoleLabeler` model.
     """
+
     def __init__(self, model: Model, dataset_reader: DatasetReader, language: str = 'en_core_web_sm') -> None:
         super().__init__(model, dataset_reader)
         self._tokenizer = SpacyWordSplitter(language=language, pos_tags=True)
@@ -199,9 +200,9 @@ class BoltSRLPredictor(Predictor):
                 description = self.make_srl_string(words, tags)
                 return_dicts[sentence_index]["words"] = words
                 return_dicts[sentence_index]["verbs"].append({
-                        "verb": output["verb"],
-                        "description": description,
-                        "tags": tags,
+                    "verb": output["verb"],
+                    "description": description,
+                    "tags": tags,
                 })
                 output_index += 1
 
@@ -215,9 +216,9 @@ class BoltSRLPredictor(Predictor):
             tags = output['tags']
             description = self.make_srl_string(output["words"], tags)
             results["verbs"].append({
-                    "verb": output["verb"],
-                    "description": description,
-                    "tags": tags,
+                "verb": output["verb"],
+                "description": description,
+                "tags": tags,
             })
 
         return sanitize(results)
@@ -237,7 +238,7 @@ class BoltSRLPredictor(Predictor):
                 {"verb": "...", "description": "...", "tags": [...]},
             ]}
         """
-        
+
         instances = self._sentence_to_srl_instances(inputs)
 
         if not instances:

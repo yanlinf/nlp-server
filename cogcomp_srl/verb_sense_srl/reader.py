@@ -15,6 +15,7 @@ from cogcomp_srl.bolt_srl.bolt import Bolt, BoltSentence
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
+
 def separate_hyphens(og_sentence: List[str]):
     new_sentence = []
     new_indices = []
@@ -23,22 +24,22 @@ def separate_hyphens(og_sentence: List[str]):
         broken_h_indices = []
         h_idx = word.find('-')
         bslash_idx = word.find('/')
-        h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+        h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
         prev_h_bs_idx = -1
         while h_bs_idx > 0:
             # subsection = word[prev_h_bs_idx+1:h_bs_idx+1]
-            subsection = word[prev_h_bs_idx+1:h_bs_idx]
-            broken_h_indices.append(i) # end of word before hyphen
-            broken_h_indices.append(i+1) # end of hyphe
+            subsection = word[prev_h_bs_idx + 1:h_bs_idx]
+            broken_h_indices.append(i)  # end of word before hyphen
+            broken_h_indices.append(i + 1)  # end of hyphe
             new_sentence.append(subsection)
             new_sentence.append(word[h_bs_idx])
             prev_h_bs_idx = h_bs_idx
-            h_idx = word.find('-', h_bs_idx+1)
-            bslash_idx = word.find('/', h_bs_idx+1)
-            h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+            h_idx = word.find('-', h_bs_idx + 1)
+            bslash_idx = word.find('/', h_bs_idx + 1)
+            h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
             i += 2
-        if not (prev_h_bs_idx == len(word)-1):
-            subsection = word[prev_h_bs_idx+1:]
+        if not (prev_h_bs_idx == len(word) - 1):
+            subsection = word[prev_h_bs_idx + 1:]
             new_sentence.append(subsection)
             broken_h_indices.append(i)
             i += 1
@@ -91,7 +92,8 @@ def _convert_tags_to_wordpiece_tags(tags: List[str], offsets: List[int]) -> List
     return ["O"] + new_tags + ["O"]
 
 
-def _convert_verb_indices_to_wordpiece_indices(verb_indices: List[int], offsets: List[int]): # pylint: disable=invalid-name
+def _convert_verb_indices_to_wordpiece_indices(verb_indices: List[int],
+                                               offsets: List[int]):  # pylint: disable=invalid-name
     """
     Converts binary verb indicators to account for a wordpiece tokenizer,
     extending/modifying BIO tags where appropriate to deal with words which
@@ -156,6 +158,7 @@ class SenseSRLReader(DatasetReader):
     -------
     A ``Dataset`` of ``Instances`` for Semantic Role Labelling.
     """
+
     def __init__(self,
                  token_indexers: Dict[str, TokenIndexer] = None,
                  domain_identifier: str = None,
@@ -233,7 +236,6 @@ class SenseSRLReader(DatasetReader):
         if self._domain_identifier is not None:
             logger.info("Filtering to only include file paths containing the %s domain", self._domain_identifier)
 
-
         if "bolt" in file_path:
             bolt_reader = Bolt()
             for sentence in self._bolt_subset(bolt_reader, file_path):
@@ -254,13 +256,13 @@ class SenseSRLReader(DatasetReader):
             for sentence in self._ontonotes_subset(ontonotes_reader, file_path, self._domain_identifier):
                 tokens = [Token(t) for t in sentence.words]
                 sense = sentence.word_senses
-                #if not sentence.srl_frames:
-                    # Sentence contains no predicates.
-                    # tags = ["O" for _ in tokens]
-                    # verb_label = [0 for _ in tokens]
-                    # yield self.text_to_instance(tokens, verb_label, tags, None)
+                # if not sentence.srl_frames:
+                # Sentence contains no predicates.
+                # tags = ["O" for _ in tokens]
+                # verb_label = [0 for _ in tokens]
+                # yield self.text_to_instance(tokens, verb_label, tags, None)
                 if sentence.srl_frames:
-                #else:
+                    # else:
                     for (_, tags) in sentence.srl_frames:
                         verb_indicator = [1 if label[-2:] == "-V" else 0 for label in tags]
                         pred_index = verb_indicator.index(1)
@@ -294,7 +296,6 @@ class SenseSRLReader(DatasetReader):
             if domain_identifier is None or f"/{domain_identifier}/" in conll_file:
                 print('FILE: ', conll_file)
                 yield from ontonotes_reader.sentence_iterator(conll_file)
-
 
     def text_to_instance(self,  # type: ignore
                          tokens: List[Token],
@@ -341,7 +342,6 @@ class SenseSRLReader(DatasetReader):
             verb_index = verb_label.index(1)
             verb = tokens[verb_index].text
 
-
         metadata_dict["words"] = [x.text for x in tokens]
         metadata_dict["verb"] = verb
         metadata_dict["verb_index"] = verb_index
@@ -358,7 +358,7 @@ class SenseSRLReader(DatasetReader):
             else:
                 fields['tags'] = SequenceLabelField(tags, text_field)
             metadata_dict["gold_tags"] = tags
-        
+
         if sense:
             fields['sense'] = LabelField(str(sense), label_namespace="sense_labels")
 

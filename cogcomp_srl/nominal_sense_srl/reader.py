@@ -22,28 +22,29 @@ def separate_hyphens(og_sentence: List[str]):
         broken_h_indices = []
         h_idx = word.find('-')
         bslash_idx = word.find('/')
-        h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+        h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
         prev_h_bs_idx = -1
         while h_bs_idx > 0:
             # subsection = word[prev_h_bs_idx+1:h_bs_idx+1]
-            subsection = word[prev_h_bs_idx+1:h_bs_idx]
+            subsection = word[prev_h_bs_idx + 1:h_bs_idx]
             broken_h_indices.append(i)
-            broken_h_indices.append(i+1)
+            broken_h_indices.append(i + 1)
             new_sentence.append(subsection)
             new_sentence.append(word[h_bs_idx])
             prev_h_bs_idx = h_bs_idx
-            h_idx = word.find('-', h_bs_idx+1)
-            bslash_idx = word.find('/', h_bs_idx+1)
-            h_bs_idx = min(h_idx, bslash_idx) if h_idx>=0 and bslash_idx>=0 else max(h_idx, bslash_idx)
+            h_idx = word.find('-', h_bs_idx + 1)
+            bslash_idx = word.find('/', h_bs_idx + 1)
+            h_bs_idx = min(h_idx, bslash_idx) if h_idx >= 0 and bslash_idx >= 0 else max(h_idx, bslash_idx)
             i += 2
-        if not (prev_h_bs_idx == len(word)-1):
-            subsection = word[prev_h_bs_idx+1:]
+        if not (prev_h_bs_idx == len(word) - 1):
+            subsection = word[prev_h_bs_idx + 1:]
             new_sentence.append(subsection)
             broken_h_indices.append(i)
             i += 1
         new_indices.append(broken_h_indices)
         print('NEW SENTENCE: ', new_sentence, ' ; NEW INDICES: ', new_indices)
     return new_sentence, new_indices
+
 
 def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: List[str]):
     all_args_ordered = []
@@ -59,7 +60,7 @@ def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: Li
             subargs = subargs.split(",")
         else:
             subargs = [subargs]
-        label = arg[arg.find('-')+1:]
+        label = arg[arg.find('-') + 1:]
         isfirst = True
         for subarg in subargs:
             # If is a hyphenation for a span of words, include all inside up to edges' hyphens, if existant. Assumes continuity.
@@ -71,23 +72,23 @@ def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: Li
                 if len(new_indices[int(start[:sub_idx])]) <= 1:
                     # Specified hyphenated arg, but start index not actually a hyphenation. Consider moving handling of this to the span.srl generating code.
                     new_start = new_indices[int(start[:sub_idx])][0]
-                elif int(start[sub_idx+1:]) >= len(new_indices[int(start[:sub_idx])]):
+                elif int(start[sub_idx + 1:]) >= len(new_indices[int(start[:sub_idx])]):
                     print("Faulty data point with arg ", arg)
                     continue
                 else:
-                    new_start = new_indices[int(start[:sub_idx])][int(start[sub_idx+1:])]
-            end = subarg[subarg.find(':')+1:]
+                    new_start = new_indices[int(start[:sub_idx])][int(start[sub_idx + 1:])]
+            end = subarg[subarg.find(':') + 1:]
             sub_idx = end.find('_')
             if sub_idx < 0:
-                new_end = new_indices[int(end)][-1] # refer to entire section
+                new_end = new_indices[int(end)][-1]  # refer to entire section
             else:
                 if len(new_indices[int(end[:sub_idx])]) <= 1:
                     new_end = new_indices[int(end[:sub_idx])][0]
-                elif int(end[sub_idx+1:]) >= len(new_indices[int(end[:sub_idx])]):
+                elif int(end[sub_idx + 1:]) >= len(new_indices[int(end[:sub_idx])]):
                     print("Faulty data point with arg ", arg)
                     continue
                 else:
-                    new_end = new_indices[int(end[:sub_idx])][int(end[sub_idx+1:])]
+                    new_end = new_indices[int(end[:sub_idx])][int(end[sub_idx + 1:])]
             if isfirst:
                 all_args_ordered.append((new_start, new_end, label, ""))
             else:
@@ -102,13 +103,13 @@ def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: Li
         if not prev_arg:
             prev_arg = arg
             continue
-        if arg[0] <= prev_arg[1]: # overlap exists
-            if arg[3] in {"R-", "C-"}: # previous chain or ref has priority, or skip altogether
+        if arg[0] <= prev_arg[1]:  # overlap exists
+            if arg[3] in {"R-", "C-"}:  # previous chain or ref has priority, or skip altogether
                 continue
             if prev_arg[3] in {"R-", "C-"}:
                 prev_arg = arg
                 continue
-            if "M" in arg[2]: # TODO specify M as in argM?
+            if "M" in arg[2]:  # TODO specify M as in argM?
                 continue
             if "M" in prev_arg[2]:
                 prev_arg = arg
@@ -118,7 +119,7 @@ def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: Li
             if prev_arg[2].upper() == "SUPPORT":
                 prev_arg = arg
                 continue
-            if len(arg[2]) > 4: # ARG#-SOMETHING
+            if len(arg[2]) > 4:  # ARG#-SOMETHING
                 continue
             if len(prev_arg[2]) > 4:
                 prev_arg = arg
@@ -144,14 +145,13 @@ def get_bio_tags(args: List[str], new_indices: List[List[int]], new_sentence: Li
         if current_label_at_end != 'O':
             print('ERROR! OVERLAP AT END. CURRENTLY ', current_label_at_end)
 
-        bio_tags[arg[0]] = "B-{0}{1}".format(arg[3],arg[2])
-        i = arg[0]+1
+        bio_tags[arg[0]] = "B-{0}{1}".format(arg[3], arg[2])
+        i = arg[0] + 1
         while i <= arg[1]:
-            bio_tags[i] = "I-{0}{1}".format(arg[3],arg[2])
+            bio_tags[i] = "I-{0}{1}".format(arg[3], arg[2])
             i += 1
     print('BIO TAGS: ', bio_tags)
     return bio_tags
-
 
 
 def _convert_tags_to_wordpiece_tags(new_tags: List[int], end_offsets: List[int]):
@@ -176,7 +176,7 @@ def _convert_tags_to_wordpiece_tags(new_tags: List[int], end_offsets: List[int])
     j = 0
     for i, offset in enumerate(end_offsets):
         tag = new_tags[i]
-        is_o = tag=="O"
+        is_o = tag == "O"
         is_start = True
         while j < offset:
             if is_o:
@@ -191,6 +191,7 @@ def _convert_tags_to_wordpiece_tags(new_tags: List[int], end_offsets: List[int])
                 wordpieced_tags.append("I-" + label)
             j += 1
     return ["O"] + wordpieced_tags + ["O"]
+
 
 def _convert_nom_indices_to_wordpiece_indices(nom_indices: List[int], end_offsets: List[int]):
     """
@@ -210,17 +211,18 @@ def _convert_nom_indices_to_wordpiece_indices(nom_indices: List[int], end_offset
     """
     j = 0
     new_nom_indices = []
-    for i, offset in enumerate(end_offsets): # For each word's offset (includes separated hyphenation)
-        indicator = nom_indices[i] # 1 if word at i is nom, 0 if not.
+    for i, offset in enumerate(end_offsets):  # For each word's offset (includes separated hyphenation)
+        indicator = nom_indices[i]  # 1 if word at i is nom, 0 if not.
         while j < offset:
-            new_nom_indices.append(indicator) # Append indicator over length of wordpieces for word.
+            new_nom_indices.append(indicator)  # Append indicator over length of wordpieces for word.
             j += 1
 
     # Add 0 indicators for cls and sep tokens.
     return [0] + new_nom_indices + [0]
 
+
 @DatasetReader.register("nombank-sense-srl")
-class NombankSenseSRLReader(DatasetReader): 
+class NombankSenseSRLReader(DatasetReader):
     """
     This DatasetReader is designed to read in the Nombank data that has been
     converted to self-defined "span" format. This dataset reader specifically
@@ -257,19 +259,19 @@ class NombankSenseSRLReader(DatasetReader):
             token_indexers: Dict[str, TokenIndexer] = None,
             lazy: bool = False,
             bert_model_name: str = None,
-        ) -> None:
+    ) -> None:
         super().__init__(lazy)
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         if bert_model_name is not None:
             self.bert_tokenizer = BertTokenizer.from_pretrained(bert_model_name)
-            self.lowercase_input = "uncased" in bert_model_name 
+            self.lowercase_input = "uncased" in bert_model_name
         else:
             self.bert_tokenizer = None
             self.lowercase_input = False
 
     def _wordpiece_tokenize_input(
             self, tokens: List[str]
-            ) -> Tuple[List[str], List[int], List[int]]:
+    ) -> Tuple[List[str], List[int], List[int]]:
         """
         Convert a list of tokens to wordpiece tokens and offsets, as well as
         adding BERT CLS and SEP tokens to the beginning and end of the 
@@ -305,7 +307,7 @@ class NombankSenseSRLReader(DatasetReader):
             if self.lowercase_input:
                 token = token.lower()
             word_pieces = self.bert_tokenizer.wordpiece_tokenizer.tokenize(token)
-            start_offsets.append(cumulative+1) # +1 because we add the starting "[CLS]" token later.
+            start_offsets.append(cumulative + 1)  # +1 because we add the starting "[CLS]" token later.
             cumulative += len(word_pieces)
             end_offsets.append(cumulative)
             word_piece_tokens.extend(word_pieces)
@@ -324,7 +326,7 @@ class NombankSenseSRLReader(DatasetReader):
             new_tokens = [Token(t) for t in new_sentence]
             new_pred_idx = new_indices[og_nom_loc[0]]
             if len(og_nom_loc) > 1:
-                if og_nom_loc[1] >= len(new_pred_idx): # Some datapoints are faulty, such as wsj_1495 10 47
+                if og_nom_loc[1] >= len(new_pred_idx):  # Some datapoints are faulty, such as wsj_1495 10 47
                     print('Faulty data point. Trying to access hyphenation that does not exist.')
                     continue
                 new_pred_idx = [new_pred_idx[og_nom_loc[1]]]
@@ -355,16 +357,16 @@ class NombankSenseSRLReader(DatasetReader):
         for line in fin.readlines():
             str_list = line.strip().split()
             separator_index = str_list.index("|||")
-            sense = str_list[separator_index+1]
+            sense = str_list[separator_index + 1]
             og_sentence = str_list[2:separator_index]
-            args = str_list[separator_index+2:]
+            args = str_list[separator_index + 2:]
             # Get index of predicate. Predicate is always first argument.
             predicate_loc = args[0][:args[0].find(':')]
             sub_idx = predicate_loc.find('_')
             if sub_idx < 0:
                 og_nom_loc = [int(predicate_loc)]
             else:
-                og_nom_loc = (int(predicate_loc[:sub_idx]), int(predicate_loc[sub_idx+1:]))
+                og_nom_loc = (int(predicate_loc[:sub_idx]), int(predicate_loc[sub_idx + 1:]))
             # Get new indices and new sentence, hyphenations separated.
             new_sentence, new_indices = separate_hyphens(og_sentence)
             # Get BIO tags from argument spans. 
@@ -375,8 +377,9 @@ class NombankSenseSRLReader(DatasetReader):
         return data
 
     def text_to_instance(
-            self, og_tokens: List[Token], new_tokens: List[Token], nom_label: List[int], new_tags: List[str]=None, sense: str=None,
-            ) -> Instance:
+            self, og_tokens: List[Token], new_tokens: List[Token], nom_label: List[int], new_tags: List[str] = None,
+            sense: str = None,
+    ) -> Instance:
         """
         We take original sentence, `pre-tokenized` input as tokens here, as 
         well as the tokens and nominal indices corresponding to once the 
@@ -390,17 +393,17 @@ class NombankSenseSRLReader(DatasetReader):
         metadata_dict: Dict[str, Any] = {}
         if self.bert_tokenizer is not None:
             wordpieces, end_offsets, start_offsets = self._wordpiece_tokenize_input(
-                    [t.text for t in new_tokens] 
-                    )
+                [t.text for t in new_tokens]
+            )
             # end_offsets and start_offsets are computed to correspond to sentence with separated hyphens.
             new_nom = _convert_nom_indices_to_wordpiece_indices(nom_label, end_offsets)
             metadata_dict["offsets"] = start_offsets
             text_field = TextField(
-                    [Token(t, text_id=self.bert_tokenizer.vocab[t]) for t in wordpieces],
-                    token_indexers=self._token_indexers,
-                    )
+                [Token(t, text_id=self.bert_tokenizer.vocab[t]) for t in wordpieces],
+                token_indexers=self._token_indexers,
+            )
             nom_indicator = SequenceLabelField(new_nom, text_field)
-        else: # Without a bert_tokenizer, just give it the new_tokens and corresponding information.
+        else:  # Without a bert_tokenizer, just give it the new_tokens and corresponding information.
             text_field = TextField(new_tokens, token_indexers=self._token_indexers)
             nom_indicator = SequenceLabelField(nom_label, text_field)
 
@@ -408,13 +411,13 @@ class NombankSenseSRLReader(DatasetReader):
         fields["tokens"] = text_field
         fields["nom_indicator"] = nom_indicator
 
-        if all(x==0 for x in nom_label):
+        if all(x == 0 for x in nom_label):
             nom = None
             nom_index = None
         else:
-            nom_index = [i for i in range(len(nom_label)) if nom_label[i]==1] 
+            nom_index = [i for i in range(len(nom_label)) if nom_label[i] == 1]
             nom = ''
-            for n_idx in nom_index: # nom_index is indexed to words
+            for n_idx in nom_index:  # nom_index is indexed to words
                 nom += new_tokens[n_idx].text
             # if includes mult tokens bc hyphenated separated
 
@@ -429,11 +432,9 @@ class NombankSenseSRLReader(DatasetReader):
             else:
                 fields["tags"] = SequenceLabelField(new_tags, text_field)
             metadata_dict["gold_tags"] = new_tags
-        
+
         if sense:
             fields['sense'] = LabelField(sense, label_namespace="sense_labels")
 
         fields["metadata"] = MetadataField(metadata_dict)
         return Instance(fields)
-
-

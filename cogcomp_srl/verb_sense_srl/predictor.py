@@ -10,6 +10,7 @@ from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 from allennlp.models import Model
 from allennlp.predictors.predictor import Predictor
 
+
 # print("Processing time for import VERB", time() - start_time)
 
 
@@ -18,6 +19,7 @@ class SenseSRLPredictor(Predictor):
     """
     Predictor for the :class:`~allennlp.models.bidaf.SemanticRoleLabeler` model.
     """
+
     def __init__(self, model: Model, dataset_reader: DatasetReader, language: str = 'en_core_web_sm') -> None:
         super().__init__(model, dataset_reader)
         # start_time = time()
@@ -137,9 +139,8 @@ class SenseSRLPredictor(Predictor):
         tokens = self._tokenizer.split_words(sentence)
 
         # print("Processing time for tokenizing verb ", time() - start_time)
-        
-        return self.tokens_to_instances(tokens)
 
+        return self.tokens_to_instances(tokens)
 
     @overrides
     def predict_batch_json(self, inputs: List[JsonDict]) -> List[JsonDict]:
@@ -209,10 +210,10 @@ class SenseSRLPredictor(Predictor):
                 description = self.make_srl_string(words, tags)
                 return_dicts[sentence_index]["words"] = words
                 return_dicts[sentence_index]["verbs"].append({
-                        "verb": output["verb"],
-                        "sense": output["sense"],
-                        "description": description,
-                        "tags": tags,
+                    "verb": output["verb"],
+                    "sense": output["sense"],
+                    "description": description,
+                    "tags": tags,
                 })
                 output_index += 1
 
@@ -227,12 +228,12 @@ class SenseSRLPredictor(Predictor):
             tags = output['tags']
             description = self.make_srl_string(output["words"], tags)
             results["verbs"].append({
-                    "verb": output["verb"],
-                    "sense": output["sense"],
-                    "description": description,
-                    "tags": tags,
+                "verb": output["verb"],
+                "sense": output["sense"],
+                "description": description,
+                "tags": tags,
             })
-        
+
         # print("Processing Time for verb inst", time() - start_time)
         return sanitize(results)
 
@@ -253,7 +254,7 @@ class SenseSRLPredictor(Predictor):
         """
 
         # start_time = time()
-        
+
         instances = self._sentence_to_srl_instances(inputs)
 
         if not instances:
@@ -262,5 +263,3 @@ class SenseSRLPredictor(Predictor):
         # print("Processing Time for verb ", time() - start_time)
 
         return self.predict_instances(instances)
-
-
