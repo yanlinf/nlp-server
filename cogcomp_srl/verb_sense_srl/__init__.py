@@ -1,3 +1,3 @@
-from verb_sense_srl.model import SenseSRLModel
-from verb_sense_srl.predictor import SenseSRLPredictor
-from verb_sense_srl.reader import SenseSRLReader
+from cogcomp_srl.verb_sense_srl.model import SenseSRLModel
+from cogcomp_srl.verb_sense_srl.predictor import SenseSRLPredictor
+from cogcomp_srl.verb_sense_srl.reader import SenseSRLReader

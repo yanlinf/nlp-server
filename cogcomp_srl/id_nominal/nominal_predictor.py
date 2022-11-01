@@ -11,7 +11,7 @@ from allennlp.models import Model
 from allennlp.data.tokenizers import Token
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 
-from id_nominal.nombank_reader import separate_hyphens
+from cogcomp_srl.id_nominal.nombank_reader import separate_hyphens
 
 
 @Predictor.register("nombank-id")

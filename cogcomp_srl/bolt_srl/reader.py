@@ -1,9 +1,7 @@
 import logging
 from typing import Dict, List, Iterable, Tuple, Any
-
 from overrides import overrides
 from pytorch_pretrained_bert.tokenization import BertTokenizer
-
 from allennlp.common.file_utils import cached_path
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.fields import Field, TextField, SequenceLabelField, MetadataField, LabelField
@@ -11,7 +9,7 @@ from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.data.dataset_readers.dataset_utils import Ontonotes, OntonotesSentence
-from bolt_srl.bolt import Bolt, BoltSentence
+from cogcomp_srl.bolt_srl.bolt import Bolt, BoltSentence
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -61,7 +59,8 @@ def _convert_tags_to_wordpiece_tags(tags: List[str], offsets: List[int]) -> List
     return ["O"] + new_tags + ["O"]
 
 
-def _convert_verb_indices_to_wordpiece_indices(verb_indices: List[int], offsets: List[int]): # pylint: disable=invalid-name
+def _convert_verb_indices_to_wordpiece_indices(verb_indices: List[int],
+                                               offsets: List[int]):  # pylint: disable=invalid-name
     """
     Converts binary verb indicators to account for a wordpiece tokenizer,
     extending/modifying BIO tags where appropriate to deal with words which
@@ -124,6 +123,7 @@ class BoltSRLReader(DatasetReader):
     -------
     A ``Dataset`` of ``Instances`` for Semantic Role Labelling.
     """
+
     def __init__(self,
                  token_indexers: Dict[str, TokenIndexer] = None,
                  domain_identifier: str = None,
@@ -213,16 +213,15 @@ class BoltSRLReader(DatasetReader):
         elif "ontonotes" in file_path:
             ontonotes_reader = Ontonotes()
             for sentence in self._ontonotes_subset(ontonotes_reader, file_path):
-                tokens=[Token(t) for t in sentence.words]
+                tokens = [Token(t) for t in sentence.words]
                 if not sentence.srl_frames:
                     tags = ["O" for _ in tokens]
                     verb_label = [0 for _ in tokens]
                     yield self.text_to_instance(tokens, verb_label, tags)
                 else:
                     for (_, tags) in sentence.srl_frames:
-                        verb_indicator = [1 if label[-2:]=="-V" else 0 for label in tags]
+                        verb_indicator = [1 if label[-2:] == "-V" else 0 for label in tags]
                         yield self.text_to_instance(tokens, verb_indicator, tags)
-                
 
     @staticmethod
     def _ontonotes_subset(ontonotes_reader: Ontonotes,
@@ -277,7 +276,6 @@ class BoltSRLReader(DatasetReader):
         else:
             verb_index = verb_label.index(1)
             verb = tokens[verb_index].text
-
 
         metadata_dict["words"] = [x.text for x in tokens]
         metadata_dict["verb"] = verb

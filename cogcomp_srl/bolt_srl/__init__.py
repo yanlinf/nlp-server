@@ -1,3 +1,3 @@
-from bolt_srl.model import BoltSRLModel
-from bolt_srl.predictor import BoltSRLPredictor
-from bolt_srl.reader import BoltSRLReader
+from cogcomp_srl.bolt_srl.model import BoltSRLModel
+from cogcomp_srl.bolt_srl.predictor import BoltSRLPredictor
+from cogcomp_srl.bolt_srl.reader import BoltSRLReader

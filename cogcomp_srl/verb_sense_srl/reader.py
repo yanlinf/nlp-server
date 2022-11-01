@@ -11,7 +11,7 @@ from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.data.dataset_readers.dataset_utils import Ontonotes, OntonotesSentence
-from bolt_srl.bolt import Bolt, BoltSentence
+from cogcomp_srl.bolt_srl.bolt import Bolt, BoltSentence
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

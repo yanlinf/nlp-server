@@ -1,4 +1,3 @@
-from nominal_sense_srl.model import NomSenseSRLBert
-from nominal_sense_srl.predictor import NomSenseSRLPredictor
-from nominal_sense_srl.predictor_all import AllNomSenseSRLPredictor
-from nominal_sense_srl.reader import NombankSenseSRLReader
+from cogcomp_srl.nominal_sense_srl.model import NomSenseSRLBert
+from cogcomp_srl.nominal_sense_srl.predictor import NomSenseSRLPredictor
+from cogcomp_srl.nominal_sense_srl.reader import NombankSenseSRLReader

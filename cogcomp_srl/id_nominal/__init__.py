@@ -1,3 +1,3 @@
-from id_nominal.nombank_predicate_model import NombankIdBert
-from id_nominal.nominal_predictor import NominalIdPredictor
-from id_nominal.nombank_reader import NombankReader
+from cogcomp_srl.id_nominal.nombank_predicate_model import NombankIdBert
+from cogcomp_srl.id_nominal.nominal_predictor import NominalIdPredictor
+from cogcomp_srl.id_nominal.nombank_reader import NombankReader
