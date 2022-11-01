@@ -51,7 +51,7 @@ Run [dependency parser](https://demo.allennlp.org/dependency-parsing):
 nohup python -u serve_parser.py --port 8982 &
 ```
 
-Get SRL predictions:
+Get dependency parse:
 
 ```bash
 import requests
@@ -61,4 +61,31 @@ requests.post(url, json=[{'sentence': 'I love you'}, {'sentence': 'asdf'}]).json
 #  'pos': ['PRON', 'VERB', 'PRON'],
 #  'predicted_dependencies': ['nsubj', 'root', 'dep'],
 #  ...
+```
+
+Get verb sense SRL predictions:
+
+```bash
+import requests
+url = 'http://127.0.0.1:8983/cogcomp_verb_srl'
+requests.post(url, json=[{'sentence': 'I love you'}]).json()
+# [{'verbs': [{'verb': 'love',
+#     'sense': '1.0',
+#     'description': '[ARG0: I] [V: love] [ARG1: you]',
+#     'tags': ['B-ARG0', 'B-V', 'B-ARG1']}],
+#   'words': ['I', 'love', 'you']}]
+```
+
+Get nominal sense SRL predictions:
+
+```bash
+import requests
+url = 'http://127.0.0.1:8984/cogcomp_nom_srl'
+requests.post(url, json=[{'sentence': 'Twitter confirms sale of company to Elon Musk for $44 billion.'}]).json()
+# [{'nominals': [{'nominal': 'sale',
+#     'sense': '01',
+#     'predicate_index': [2],
+#     'description': '[ARG0: Twitter] [Support: confirms] sale [ARG1: of company] [ARG2: to Elon Musk] [ARG3: for $ 44 billion]',
+#     'tags': ['B-ARG0','B-Support','O','B-ARG1','I-ARG1','B-ARG2','I-ARG2','I-ARG2','B-ARG3','I-ARG3','I-ARG3','I-ARG3']}],
+#   'words': ['Twitter','confirms','sale','of','company','to','Elon','Musk','for','$','44','billion']}]
 ```
