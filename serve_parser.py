@@ -1,9 +1,7 @@
 import argparse
-import asyncio
+import traceback
 from allennlp.predictors.predictor import Predictor
-import json
 from aiohttp import web
-import numpy as np
 
 routes = web.RouteTableDef()
 
@@ -18,7 +16,7 @@ async def handle_parse(request):
         else:
             res = model.predict(**params)
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
         return web.json_response({'error': 'Invalid request'})
     return web.json_response(res)
 

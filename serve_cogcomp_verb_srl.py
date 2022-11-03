@@ -1,4 +1,5 @@
 import argparse
+import traceback
 from aiohttp import web
 from cogcomp_srl.verb_sense_srl import SenseSRLPredictor
 
@@ -15,7 +16,7 @@ async def handle_srl(request):
         else:
             res = model.predict(**params)
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
         return web.json_response({'error': 'Invalid request'})
     return web.json_response(res)
 

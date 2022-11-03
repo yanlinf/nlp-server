@@ -1,6 +1,7 @@
 import argparse
 from aiohttp import web
 from typing import List
+import traceback
 from cogcomp_srl.id_nominal import NominalIdPredictor
 from cogcomp_srl.nominal_sense_srl import NomSenseSRLPredictor
 
@@ -92,6 +93,7 @@ async def handle_srl(request):
         else:
             res = model.predict(**params)
     except Exception as e:
+        print(traceback.format_exc())
         return web.json_response({'error': 'Invalid request'})
     return web.json_response(res)
 
