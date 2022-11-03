@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 def separate_hyphens(og_sentence: List[str]):
+    return og_sentence, [[i] for i in range(len(og_sentence))]
+
     new_sentence = []
     new_indices = []
     i = 0
