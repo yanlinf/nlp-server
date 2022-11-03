@@ -3,7 +3,7 @@ from dataclasses import asdict
 from clients import WebNomSRLPredictor, NomSRLResult
 
 
-class VerbSRLTestcase(unittest.TestCase):
+class NomSRLTestcase(unittest.TestCase):
     sentences = ['Twitter confirms sale of company to Elon Musk for $44 billion.']
     references = [
         {
