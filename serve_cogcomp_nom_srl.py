@@ -83,15 +83,33 @@ class NomSRLPredictor:
         return new_words, new_indices
 
 
+def empty_nom_frame():
+    return {
+        'nominals': [],
+        'words': [],
+    }
+
+
 @routes.post('/cogcomp_nom_srl')
 async def handle_srl(request):
     model = request.app['model']
     params = await request.json()
     try:
         if isinstance(params, list):
-            res = model.predict_batch_json(params)
+            inputs = [d for d in params if d['sentence'].strip() != '']
+            predictions = model.predict_batch_json(inputs)
+            res = []
+            for d in params:
+                if d['sentence'].strip() == '':
+                    res.append(empty_nom_frame())
+                else:
+                    res.append(predictions.pop(0))
+            assert len(res) == len(params)
         else:
-            res = model.predict(**params)
+            if params['sentence'].strip() == '':
+                res = empty_frame()
+            else:
+                res = model.predict(**params)
     except Exception as e:
         print(traceback.format_exc())
         return web.json_response({'error': 'Invalid request'})
