@@ -34,10 +34,9 @@ class NomSRLPredictor:
 
     def predict(self, sentence: str) -> dict:
         nom_id_res = self.nom_id_predictor.predict(sentence)
-        nom_srl_inputs = self._convert_id_to_srl_input(nom_id_res)
         nom_srl_res = self.nom_srl_predictor.predict(
-            sentence=nom_srl_inputs['sentence'],
-            indices=nom_srl_inputs['indices']
+            sentence=sentence,
+            indices=[i for i, x in enumerate(nom_id_res['nominals']) if x == 1]
         )
         assert isinstance(nom_srl_res, dict)
         return nom_srl_res
@@ -46,7 +45,12 @@ class NomSRLPredictor:
         nom_id_res = self.nom_id_predictor.predict_batch_json(inputs)
         assert len(nom_id_res) == len(inputs)
 
-        nom_srl_inputs = [self._convert_id_to_srl_input(dic) for dic in nom_id_res]
+        # The original implementation at https://github.com/CogComp/SRL-English
+        # with `convert_id_to_srl_input` seems to be buggy
+        nom_srl_inputs = [{
+            'sentence': dic['sentence'],
+            'indices': [i for i, x in enumerate(res['nominals']) if x == 1],
+        } for res, dic in zip(nom_id_res, inputs)]
         assert len(nom_srl_inputs) == len(inputs)
 
         nom_srl_res = self.nom_srl_predictor.predict_batch_json(nom_srl_inputs)
@@ -57,7 +61,7 @@ class NomSRLPredictor:
 
     def _convert_id_to_srl_input(self, nom_id_res: dict) -> dict:
         """
-        adapted from https://github.com/CogComp/SRL-English/blob/main/convert_id_to_srl_input.py
+        deprecated, adapted from https://github.com/CogComp/SRL-English/blob/main/convert_id_to_srl_input.py
         """
         indices = [idx for idx in range(len(nom_id_res['nominals'])) if nom_id_res['nominals'][idx] == 1]
         words, indices = self._shift_indices_for_empty_strings(nom_id_res['words'], indices)
@@ -68,7 +72,7 @@ class NomSRLPredictor:
 
     def _shift_indices_for_empty_strings(self, words, indices):
         """
-        adapted from https://github.com/CogComp/SRL-English/blob/main/convert_id_to_srl_input.py
+        deprecated, adapted from https://github.com/CogComp/SRL-English/blob/main/convert_id_to_srl_input.py
         """
         shiftleft = 0
         new_indices = []
